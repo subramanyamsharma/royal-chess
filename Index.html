@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Royal Chess</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --wood-mid: #c8902a; --wood-dark: #7a4a10; --wood-deep: #3d1f05;
+  --board-light: #f0d9a0; --board-dark: #b8813e;
+  --gold: #d4a843; --gold-light: #f5d878; --cream: #faf3e0;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:radial-gradient(ellipse at center,#2a1200 0%,#0d0600 100%); min-height:100vh; font-family:'Crimson Text',serif; color:var(--cream); overflow-x:hidden; }
+.screen { width:100%; display:flex; flex-direction:column; align-items:center; padding:20px; }
+.hidden { display:none !important; }
+h1 { font-family:'Cinzel',serif; font-size:2.5rem; font-weight:900; letter-spacing:.15em; text-transform:uppercase; color:var(--gold); text-shadow:0 0 28px rgba(212,168,67,.4); margin-bottom:4px; }
+.sub { font-family:'Cinzel',serif; font-size:.68rem; letter-spacing:.4em; color:var(--wood-mid); text-transform:uppercase; margin-bottom:20px; }
+
+/* SETUP */
+.card { background:linear-gradient(145deg,#2a1400,#1a0a00); border:2px solid var(--wood-mid); border-radius:16px; padding:34px 42px; max-width:460px; width:100%; box-shadow:0 0 55px rgba(200,144,42,.1); }
+.card-title { font-family:'Cinzel',serif; font-size:1.05rem; color:var(--gold); letter-spacing:.2em; text-align:center; margin-bottom:24px; padding-bottom:14px; border-bottom:1px solid rgba(200,144,42,.3); }
+.fg { margin-bottom:18px; }
+.fg label { display:block; font-family:'Cinzel',serif; font-size:.68rem; letter-spacing:.2em; color:var(--wood-mid); text-transform:uppercase; margin-bottom:8px; }
+.brow { display:flex; gap:8px; }
+.bopt { flex:1; padding:10px 5px; background:rgba(255,255,255,.04); border:1px solid rgba(200,144,42,.3); border-radius:8px; color:var(--cream); font-family:'Cinzel',serif; font-size:.7rem; letter-spacing:.07em; cursor:pointer; transition:all .17s; text-align:center; }
+.bopt:hover { border-color:var(--gold); background:rgba(212,168,67,.1); }
+.bopt.on { background:linear-gradient(135deg,var(--wood-mid),var(--wood-dark)); border-color:var(--gold); color:var(--gold-light); box-shadow:0 0 13px rgba(212,168,67,.18); }
+.ninp { display:flex; flex-direction:column; gap:10px; }
+.ninp input { background:rgba(0,0,0,.3); border:1px solid rgba(200,144,42,.3); border-radius:8px; padding:11px 14px; color:var(--cream); font-family:'Crimson Text',serif; font-size:1rem; outline:none; width:100%; transition:border-color .2s; }
+.ninp input::placeholder { color:rgba(250,243,224,.3); }
+.ninp input:focus { border-color:var(--gold); }
+.btn-go { width:100%; padding:14px; margin-top:8px; background:linear-gradient(135deg,#c8902a,#8a5a10); border:1px solid var(--gold); border-radius:10px; color:var(--gold-light); font-family:'Cinzel',serif; font-size:.9rem; font-weight:700; letter-spacing:.22em; text-transform:uppercase; cursor:pointer; transition:all .26s; box-shadow:0 4px 18px rgba(200,144,42,.26); }
+.btn-go:hover { background:linear-gradient(135deg,#d4a843,#a06a20); transform:translateY(-1px); }
+
+/* GAME */
+#gs { max-width:1060px; }
+.gl { display:flex; gap:16px; align-items:flex-start; justify-content:center; flex-wrap:wrap; }
+
+/* Panels */
+.pp { background:linear-gradient(160deg,#2a1400,#180c00); border:1px solid rgba(200,144,42,.38); border-radius:12px; padding:14px; min-width:148px; max-width:170px; flex:1; box-shadow:0 4px 18px rgba(0,0,0,.5); transition:all .28s; }
+.pp.act { border-color:var(--gold); box-shadow:0 0 22px rgba(212,168,67,.22); }
+.pi { font-size:2.5rem; text-align:center; margin-bottom:6px; }
+.pn { font-family:'Cinzel',serif; font-size:.85rem; font-weight:600; color:var(--gold); text-align:center; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pc { font-size:.66rem; color:var(--wood-mid); text-align:center; letter-spacing:.13em; text-transform:uppercase; margin-bottom:10px; }
+.tbox { background:rgba(0,0,0,.4); border-radius:7px; padding:8px; text-align:center; border:1px solid rgba(200,144,42,.18); }
+.tv { font-family:'Cinzel',serif; font-size:1.45rem; font-weight:700; color:var(--cream); letter-spacing:.04em; }
+.tv.warn { color:#e87030; animation:pu .5s ease-in-out infinite alternate; }
+@keyframes pu { from{opacity:1} to{opacity:.4} }
+.cl { font-size:.62rem; color:var(--wood-mid); letter-spacing:.13em; text-transform:uppercase; margin:8px 0 2px; }
+.cp { font-size:.92rem; min-height:22px; word-break:break-all; line-height:1.3; }
+.mh { max-height:170px; overflow-y:auto; padding:6px; background:rgba(0,0,0,.26); border-radius:7px; border:1px solid rgba(200,144,42,.13); scrollbar-width:thin; scrollbar-color:var(--wood-mid) transparent; }
+.mh::-webkit-scrollbar { width:3px; }
+.mh::-webkit-scrollbar-thumb { background:var(--wood-mid); border-radius:2px; }
+.mr { display:flex; gap:6px; margin-bottom:2px; font-family:'Cinzel',serif; font-size:.64rem; }
+.mn { color:var(--wood-mid); min-width:18px; }
+.mw { color:var(--cream); min-width:52px; }
+.mb { color:rgba(250,243,224,.6); }
+
+/* Board */
+.ba { display:flex; flex-direction:column; align-items:center; }
+.sb { display:flex; align-items:center; justify-content:center; gap:13px; margin:0 0 11px; padding:9px 18px; background:rgba(0,0,0,.34); border:1px solid rgba(200,144,42,.2); border-radius:26px; font-family:'Cinzel',serif; font-size:.76rem; letter-spacing:.1em; color:var(--gold-light); width:100%; max-width:530px; }
+.td { width:8px; height:8px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px var(--gold); animation:bl 1s ease-in-out infinite alternate; flex-shrink:0; }
+@keyframes bl { from{opacity:1} to{opacity:.2} }
+.bo { padding:18px; background:repeating-linear-gradient(90deg,transparent,transparent 8px,rgba(120,60,5,.07) 8px,rgba(120,60,5,.07) 16px),repeating-linear-gradient(0deg,transparent,transparent 8px,rgba(120,60,5,.07) 8px,rgba(120,60,5,.07) 16px),radial-gradient(ellipse at 30% 20%,#a86420 0%,#6a3810 40%,#3d1f05 100%); border-radius:8px; box-shadow:0 0 0 3px var(--wood-deep),0 0 0 6px var(--wood-mid),0 0 0 8px var(--wood-deep),0 18px 50px rgba(0,0,0,.7); position:relative; }
+.lr { display:flex; align-items:center; }
+.lc { display:flex; flex-direction:column; justify-content:space-around; }
+.co { width:18px; height:18px; }
+.fl { font-family:'Cinzel',serif; font-size:.6rem; font-weight:600; color:rgba(212,168,67,.6); text-align:center; user-select:none; width:60px; }
+.rl { font-family:'Cinzel',serif; font-size:.6rem; font-weight:600; color:rgba(212,168,67,.6); width:18px; height:60px; display:flex; align-items:center; justify-content:center; user-select:none; }
+
+#board { display:grid; grid-template-columns:repeat(8,60px); grid-template-rows:repeat(8,60px); border:2px solid var(--wood-deep); box-shadow:inset 0 0 16px rgba(0,0,0,.3); }
+.sq { width:60px; height:60px; display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; transition:filter .12s; user-select:none; }
+.sq.lt { background:var(--board-light); }
+.sq.dk { background:var(--board-dark); }
+.sq.lt::before { content:''; position:absolute; inset:0; background:repeating-linear-gradient(15deg,transparent,transparent 10px,rgba(180,140,60,.1) 10px,rgba(180,140,60,.1) 11px); }
+.sq.dk::before { content:''; position:absolute; inset:0; background:repeating-linear-gradient(-15deg,transparent,transparent 9px,rgba(80,30,0,.13) 9px,rgba(80,30,0,.13) 10px); }
+.sq:hover { filter:brightness(1.12); }
+.sq.sel { background:rgba(212,168,67,.5) !important; box-shadow:inset 0 0 0 3px var(--gold); }
+.sq.dot::after { content:''; position:absolute; width:18px; height:18px; border-radius:50%; background:rgba(0,0,0,.22); z-index:2; }
+.sq.cap { box-shadow:inset 0 0 0 4px rgba(200,50,20,.6); }
+.sq.lf { background:rgba(200,168,67,.2) !important; }
+.sq.lt2 { background:rgba(200,168,67,.42) !important; }
+.sq.chk { background:rgba(220,50,30,.55) !important; animation:cp2 .8s ease-in-out infinite alternate; }
+@keyframes cp2 { to{background:rgba(220,50,30,.8)!important} }
+.piece { font-size:36px; position:relative; z-index:3; text-shadow:1px 2px 4px rgba(0,0,0,.5); line-height:1; pointer-events:none; }
+
+/* Controls */
+.gc { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; justify-content:center; }
+.bc { padding:7px 16px; background:rgba(200,144,42,.13); border:1px solid rgba(200,144,42,.36); border-radius:16px; color:var(--gold-light); font-family:'Cinzel',serif; font-size:.66rem; letter-spacing:.12em; text-transform:uppercase; cursor:pointer; transition:all .18s; }
+.bc:hover { background:rgba(200,144,42,.3); border-color:var(--gold); }
+
+/* POPUPS */
+.ov { position:fixed; inset:0; background:rgba(0,0,0,.74); display:flex; align-items:center; justify-content:center; z-index:500; opacity:0; pointer-events:none; transition:opacity .26s; }
+.ov.show { opacity:1; pointer-events:all; }
+.pop { background:linear-gradient(160deg,#2e1600,#180c00); border:2px solid var(--gold); border-radius:16px; padding:36px 44px; text-align:center; max-width:390px; width:90%; box-shadow:0 0 52px rgba(212,168,67,.26),0 18px 52px rgba(0,0,0,.8); transform:scale(.86); transition:transform .28s cubic-bezier(.34,1.56,.64,1); }
+.ov.show .pop { transform:scale(1); }
+.poi { font-size:3.4rem; margin-bottom:13px; }
+.pt { font-family:'Cinzel',serif; font-size:1.6rem; font-weight:700; color:var(--gold); letter-spacing:.13em; margin-bottom:9px; }
+.pm { font-size:1rem; color:var(--cream); margin-bottom:24px; line-height:1.6; }
+.pbs { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+.bp { padding:10px 24px; border-radius:26px; font-family:'Cinzel',serif; font-size:.74rem; font-weight:600; letter-spacing:.13em; text-transform:uppercase; cursor:pointer; transition:all .18s; border:none; }
+.bp.pr { background:linear-gradient(135deg,var(--wood-mid),var(--wood-dark)); color:var(--gold-light); border:1px solid var(--gold); box-shadow:0 4px 13px rgba(200,144,42,.26); }
+.bp.pr:hover { background:linear-gradient(135deg,var(--gold),var(--wood-mid)); transform:translateY(-2px); }
+.bp.se { background:transparent; color:var(--wood-mid); border:1px solid rgba(200,144,42,.3); }
+.bp.se:hover { border-color:var(--gold); color:var(--gold-light); }
+.prc { display:flex; gap:10px; justify-content:center; margin:13px 0; }
+.prb { width:56px; height:56px; display:flex; align-items:center; justify-content:center; font-size:34px; background:rgba(200,144,42,.1); border:2px solid rgba(200,144,42,.36); border-radius:8px; cursor:pointer; transition:all .18s; }
+.prb:hover { background:rgba(200,144,42,.27); border-color:var(--gold); transform:scale(1.1); }
+
+@media(max-width:750px) {
+  .gl { flex-direction:column; align-items:center; }
+  .pp { max-width:520px; width:100%; }
+  h1 { font-size:1.7rem; }
+  .sq { width:44px; height:44px; }
+  #board { grid-template-columns:repeat(8,44px); grid-template-rows:repeat(8,44px); }
+  .fl { width:44px; } .rl { height:44px; }
+  .piece { font-size:26px; }
+  .bo { padding:11px; }
+}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="ss" class="screen">
+  <h1>♞ Royal Chess ♟</h1>
+  <p class="sub">The Ancient Game of Kings</p>
+  <div class="card">
+    <div class="card-title">⚜ New Game ⚜</div>
+    <div class="fg">
+      <label>Game Mode</label>
+      <div class="brow">
+        <button class="bopt on" id="m-comp" onclick="pickMode('computer')">vs Computer</button>
+        <button class="bopt"    id="m-hum"  onclick="pickMode('human')">2 Players</button>
+      </div>
+    </div>
+    <div class="fg" id="dg">
+      <label>Difficulty</label>
+      <div class="brow">
+        <button class="bopt"    id="l-easy"   onclick="pickLvl('easy')">Easy</button>
+        <button class="bopt on" id="l-medium" onclick="pickLvl('medium')">Medium</button>
+        <button class="bopt"    id="l-hard"   onclick="pickLvl('hard')">Hard</button>
+      </div>
+    </div>
+    <div class="fg">
+      <label>Player Names</label>
+      <div class="ninp">
+        <input id="nw" type="text" placeholder="White player name" maxlength="18">
+        <input id="nb" type="text" placeholder="Black / Computer name" maxlength="18">
+      </div>
+    </div>
+    <div class="fg">
+      <label>Timer (per player)</label>
+      <div class="brow">
+        <button class="bopt"    id="t-0"   onclick="pickTime(0)">None</button>
+        <button class="bopt on" id="t-600" onclick="pickTime(600)">10 min</button>
+        <button class="bopt"    id="t-300" onclick="pickTime(300)">5 min</button>
+      </div>
+    </div>
+    <button class="btn-go" onclick="startGame()">♛ Begin Game ♛</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="gs" class="screen hidden">
+  <h1>♞ Royal Chess ♟</h1>
+  <p class="sub">The Ancient Game of Kings</p>
+  <div class="gl">
+    <div class="pp" id="pb">
+      <div class="pi">♟</div>
+      <div class="pn" id="nb2">Black</div>
+      <div class="pc">Black Pieces</div>
+      <div class="tbox"><div class="tv" id="tb">∞</div></div>
+      <div class="cl">Captured</div><div class="cp" id="cb"></div>
+      <div class="cl">Moves</div><div class="mh" id="mhist"></div>
+    </div>
+
+    <div class="ba">
+      <div class="sb"><div class="td"></div><span id="stxt">White's turn</span></div>
+      <div class="bo">
+        <div class="lr"><div class="co"></div><div id="ft" style="display:flex"></div><div class="co"></div></div>
+        <div style="display:flex">
+          <div class="lc" id="rl"></div>
+          <div id="board"></div>
+          <div class="lc" id="rr"></div>
+        </div>
+        <div class="lr"><div class="co"></div><div id="fb" style="display:flex"></div><div class="co"></div></div>
+      </div>
+      <div class="gc">
+        <button class="bc" onclick="offerDraw()">🤝 Draw</button>
+        <button class="bc" onclick="undoMove()">↩ Undo</button>
+        <button class="bc" onclick="askResign()">🏳 Resign</button>
+        <button class="bc" onclick="goSetup()">⊕ New Game</button>
+      </div>
+    </div>
+
+    <div class="pp" id="pw">
+      <div class="pi">♙</div>
+      <div class="pn" id="nw2">White</div>
+      <div class="pc">White Pieces</div>
+      <div class="tbox"><div class="tv" id="tw">∞</div></div>
+      <div class="cl">Captured</div><div class="cp" id="cw"></div>
+    </div>
+  </div>
+</div>
+
+<!-- POPUPS -->
+<div class="ov" id="p-res">
+  <div class="pop">
+    <div class="poi" id="ri">🏆</div>
+    <div class="pt" id="rt">Checkmate!</div>
+    <div class="pm" id="rm">White wins!</div>
+    <div class="pbs">
+      <button class="bp pr" onclick="goSetup()">New Game</button>
+      <button class="bp se" onclick="closeP('p-res')">Review</button>
+    </div>
+  </div>
+</div>
+<div class="ov" id="p-draw">
+  <div class="pop">
+    <div class="poi">🤝</div>
+    <div class="pt">Draw Offered</div>
+    <div class="pm" id="dom">Accept the draw?</div>
+    <div class="pbs">
+      <button class="bp pr" onclick="acceptDraw()">Accept</button>
+      <button class="bp se" onclick="closeP('p-draw')">Decline</button>
+    </div>
+  </div>
+</div>
+<div class="ov" id="p-res2">
+  <div class="pop">
+    <div class="poi">🏳</div>
+    <div class="pt">Resign?</div>
+    <div class="pm" id="resm">Confirm resignation?</div>
+    <div class="pbs">
+      <button class="bp pr" onclick="doResign()">Resign</button>
+      <button class="bp se" onclick="closeP('p-res2')">Cancel</button>
+    </div>
+  </div>
+</div>
+<div class="ov" id="p-promo">
+  <div class="pop">
+    <div class="poi">👑</div>
+    <div class="pt">Promotion!</div>
+    <div class="pm">Choose your piece:</div>
+    <div class="prc" id="prc"></div>
+  </div>
+</div>
+<div class="ov" id="p-hint">
+  <div class="pop">
+    <div class="poi" id="hi">💡</div>
+    <div class="pt" id="ht">Notice</div>
+    <div class="pm" id="hm">…</div>
+    <div class="pbs"><button class="bp pr" onclick="closeP('p-hint')">Continue</button></div>
+  </div>
+</div>
+
+<script>
+const GL={wK:'♔',wQ:'♕',wR:'♖',wB:'♗',wN:'♘',wP:'♙',bK:'♚',bQ:'♛',bR:'♜',bB:'♝',bN:'♞',bP:'♟'};
+const FILES=['a','b','c','d','e','f','g','h'];
+const PV={P:100,N:320,B:330,R:500,Q:900,K:20000};
+const PST={
+  P:[[0,0,0,0,0,0,0,0],[50,50,50,50,50,50,50,50],[10,10,20,30,30,20,10,10],[5,5,10,25,25,10,5,5],[0,0,0,20,20,0,0,0],[5,-5,-10,0,0,-10,-5,5],[5,10,10,-20,-20,10,10,5],[0,0,0,0,0,0,0,0]],
+  N:[[-50,-40,-30,-30,-30,-30,-40,-50],[-40,-20,0,0,0,0,-20,-40],[-30,0,10,15,15,10,0,-30],[-30,5,15,20,20,15,5,-30],[-30,0,15,20,20,15,0,-30],[-30,5,10,15,15,10,5,-30],[-40,-20,0,5,5,0,-20,-40],[-50,-40,-30,-30,-30,-30,-40,-50]],
+  B:[[-20,-10,-10,-10,-10,-10,-10,-20],[-10,0,0,0,0,0,0,-10],[-10,0,5,10,10,5,0,-10],[-10,5,5,10,10,5,5,-10],[-10,0,10,10,10,10,0,-10],[-10,10,10,10,10,10,10,-10],[-10,5,0,0,0,0,5,-10],[-20,-10,-10,-10,-10,-10,-10,-20]],
+  R:[[0,0,0,0,0,0,0,0],[5,10,10,10,10,10,10,5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[0,0,0,5,5,0,0,0]],
+  Q:[[-20,-10,-10,-5,-5,-10,-10,-20],[-10,0,0,0,0,0,0,-10],[-10,0,5,5,5,5,0,-10],[-5,0,5,5,5,5,0,-5],[0,0,5,5,5,5,0,-5],[-10,5,5,5,5,5,0,-10],[-10,0,5,0,0,0,0,-10],[-20,-10,-10,-5,-5,-10,-10,-20]],
+  K:[[-30,-40,-40,-50,-50,-40,-40,-30],[-30,-40,-40,-50,-50,-40,-40,-30],[-30,-40,-40,-50,-50,-40,-40,-30],[-30,-40,-40,-50,-50,-40,-40,-30],[-20,-30,-30,-40,-40,-30,-30,-20],[-10,-20,-20,-20,-20,-20,-20,-10],[20,20,0,0,0,0,20,20],[20,30,10,0,0,10,30,20]]
+};
+
+// State
+let board,turn,sel,captd,ep,cast,hc,fn,lm,over,ph,mlog,hist;
+let gmode='computer',diff='medium',tsecs=600;
+let timers,tint;
+let names={w:'White',b:'Black'};
+
+// ── Setup UI ──────────────────────────────────────────────
+function pickMode(m){
+  gmode=m;
+  ['computer','human'].forEach(x=>document.getElementById('m-'+(x==='computer'?'comp':'hum')).classList.toggle('on',x===m));
+  document.getElementById('dg').style.display=m==='computer'?'':'none';
+}
+function pickLvl(l){
+  diff=l;
+  ['easy','medium','hard'].forEach(x=>document.getElementById('l-'+x).classList.toggle('on',x===l));
+}
+function pickTime(t){
+  tsecs=t;
+  [0,600,300].forEach(x=>document.getElementById('t-'+x).classList.toggle('on',x===t));
+}
+
+function startGame(){
+  const wn=document.getElementById('nw').value.trim()||'White';
+  const bn=document.getElementById('nb').value.trim()||(gmode==='computer'?'Computer':'Black');
+  names={w:wn,b:bn};
+  document.getElementById('nw2').textContent=wn;
+  document.getElementById('nb2').textContent=bn;
+  document.getElementById('ss').classList.add('hidden');
+  document.getElementById('gs').classList.remove('hidden');
+  initGame();
+}
+
+function goSetup(){
+  closeAll();clearInterval(tint);
+  document.getElementById('gs').classList.add('hidden');
+  document.getElementById('ss').classList.remove('hidden');
+}
+
+// ── Init ──────────────────────────────────────────────────
+function initGame(){
+  board=[
+    ['bR','bN','bB','bQ','bK','bB','bN','bR'],
+    ['bP','bP','bP','bP','bP','bP','bP','bP'],
+    [null,null,null,null,null,null,null,null],
+    [null,null,null,null,null,null,null,null],
+    [null,null,null,null,null,null,null,null],
+    [null,null,null,null,null,null,null,null],
+    ['wP','wP','wP','wP','wP','wP','wP','wP'],
+    ['wR','wN','wB','wQ','wK','wB','wN','wR']
+  ];
+  turn='w';sel=null;captd={w:[],b:[]};ep=null;
+  cast={w:{k:true,q:true},b:{k:true,q:true}};
+  hc=0;fn=1;lm=null;over=false;ph=[];mlog=[];hist=[];
+  timers={w:tsecs,b:tsecs};
+  clearInterval(tint);
+  if(tsecs>0)tint=setInterval(tick,1000);
+  buildDOM();buildLabels();render();updateUI();
+  setSt(names.w+"'s turn (White)");
+}
+
+function buildLabels(){
+  ['ft','fb'].forEach(id=>{
+    const el=document.getElementById(id);el.innerHTML='';
+    FILES.forEach(f=>{const d=document.createElement('div');d.className='fl';d.textContent=f;el.appendChild(d);});
+  });
+  ['rl','rr'].forEach(id=>{
+    const el=document.getElementById(id);el.innerHTML='';
+    for(let r=8;r>=1;r--){const d=document.createElement('div');d.className='rl';d.textContent=r;el.appendChild(d);}
+  });
+}
+
+function buildDOM(){
+  const el=document.getElementById('board');el.innerHTML='';
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const s=document.createElement('div');
+    s.className='sq '+((r+c)%2===0?'lt':'dk');
+    s.dataset.r=r;s.dataset.c=c;
+    s.addEventListener('click',()=>onClick(r,c));
+    el.appendChild(s);
+  }
+}
+
+// ── Render ────────────────────────────────────────────────
+function sqEl(r,c){return document.querySelector('[data-r="'+r+'"][data-c="'+c+'"]');}
+
+function render(){
+  const pm=sel?getLegal(sel[0],sel[1]):[];
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const el=sqEl(r,c);
+    el.className='sq '+((r+c)%2===0?'lt':'dk');
+    if(lm){if(lm.fr===r&&lm.fc===c)el.classList.add('lf');if(lm.tr===r&&lm.tc===c)el.classList.add('lt2');}
+    if(sel&&sel[0]===r&&sel[1]===c)el.classList.add('sel');
+    const p=board[r][c];
+    if(p&&p[1]==='K'&&p[0]===turn&&inCheck(turn))el.classList.add('chk');
+    el.innerHTML=p?'<span class="piece">'+GL[p]+'</span>':'';
+    if(sel&&pm.some(([mr,mc])=>mr===r&&mc===c)){
+      if(board[r][c])el.classList.add('cap');
+      else el.classList.add('dot');
+    }
+  }
+}
+
+function updateUI(){
+  const tw=document.getElementById('tw'),tb=document.getElementById('tb');
+  tw.textContent=tsecs>0?fmt(timers.w):'∞';
+  tb.textContent=tsecs>0?fmt(timers.b):'∞';
+  tw.className='tv'+(tsecs>0&&timers.w<30?' warn':'');
+  tb.className='tv'+(tsecs>0&&timers.b<30?' warn':'');
+  document.getElementById('pw').className='pp'+(turn==='w'?' act':'');
+  document.getElementById('pb').className='pp'+(turn==='b'?' act':'');
+  document.getElementById('cw').textContent=captd.w.map(p=>GL[p]).join('');
+  document.getElementById('cb').textContent=captd.b.map(p=>GL[p]).join('');
+  const mh=document.getElementById('mhist');mh.innerHTML='';
+  for(let i=0;i<mlog.length;i+=2){
+    const row=document.createElement('div');row.className='mr';
+    row.innerHTML='<span class="mn">'+(Math.floor(i/2)+1)+'.</span><span class="mw">'+(mlog[i]||'')+'</span><span class="mb">'+(mlog[i+1]||'')+'</span>';
+    mh.appendChild(row);
+  }
+  mh.scrollTop=mh.scrollHeight;
+}
+
+function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+function setSt(t){document.getElementById('stxt').textContent=t;}
+
+// ── Timer ─────────────────────────────────────────────────
+function tick(){
+  if(over)return;
+  timers[turn]--;
+  if(timers[turn]<=0){timers[turn]=0;updateUI();endGame('timeout',turn==='w'?'b':'w');return;}
+  updateUI();
+}
+
+// ── Click ─────────────────────────────────────────────────
+function onClick(r,c){
+  if(over)return;
+  if(gmode==='computer'&&turn==='b')return;
+  const p=board[r][c];
+  if(sel){
+    const[sr,sc]=sel;
+    if(sr===r&&sc===c){sel=null;render();return;}
+    const legal=getLegal(sr,sc);
+    if(legal.some(([mr,mc])=>mr===r&&mc===c)){doMove(sr,sc,r,c,afterMove);return;}
+    if(p&&p[0]===turn){sel=[r,c];render();return;}
+    sel=null;render();return;
+  }
+  if(p&&p[0]===turn){sel=[r,c];render();}
+}
+
+// ── Move ──────────────────────────────────────────────────
+function doMove(sr,sc,tr,tc,cb){
+  const piece=board[sr][sc],target=board[tr][tc],type=piece[1],color=piece[0];
+  if(type==='P'&&(tr===0||tr===7)){
+    showPromo(color,pt=>{applyMove(sr,sc,tr,tc,color+pt,target);mlog.push(FILES[sc]+(8-tr)+'='+pt);cb();});
+    return;
+  }
+  applyMove(sr,sc,tr,tc,piece,target);
+  mlog.push(buildAN(piece,sr,sc,tr,tc,target));
+  cb();
+}
+
+function applyMove(sr,sc,tr,tc,piece,captured){
+  const color=piece[0],type=piece[1];
+  hist.push({board:board.map(r=>[...r]),ep,cast:JSON.parse(JSON.stringify(cast)),captd:JSON.parse(JSON.stringify(captd)),turn,hc,fn,lm:lm?{...lm}:null,ll:mlog.length});
+  if(captured)captd[color].push(captured);
+  if(type==='P'&&sc!==tc&&!board[tr][tc]){const er=color==='w'?tr+1:tr-1;captd[color].push(board[er][tc]);board[er][tc]=null;}
+  if(type==='K'&&Math.abs(sc-tc)===2){if(tc===6){board[sr][5]=board[sr][7];board[sr][7]=null;}else{board[sr][3]=board[sr][0];board[sr][0]=null;}}
+  board[tr][tc]=piece;board[sr][sc]=null;
+  ep=(type==='P'&&Math.abs(sr-tr)===2)?[(sr+tr)/2,sc]:null;
+  if(type==='K'){cast[color].k=false;cast[color].q=false;}
+  if(type==='R'){if(sc===7)cast[color].k=false;if(sc===0)cast[color].q=false;}
+  lm={fr:sr,fc:sc,tr,tc};sel=null;
+}
+
+function buildAN(piece,sr,sc,tr,tc,target){
+  const t=piece[1];let n='';
+  if(t!=='P')n+=t;
+  if(target||(t==='P'&&sc!==tc))n+=(t==='P'?FILES[sc]:'')+`x`;
+  n+=FILES[tc]+(8-tr);return n;
+}
+
+function afterMove(){
+  const prev=turn;
+  turn=turn==='w'?'b':'w';
+  if(prev==='b')fn++;
+  recPos();checkState();render();updateUI();
+  if(!over&&gmode==='computer'&&turn==='b'){
+    setSt('Computer is thinking…');
+    setTimeout(aiMove,diff==='easy'?350:diff==='medium'?600:950);
+  }
+}
+
+// ── State checks ──────────────────────────────────────────
+function checkState(){
+  const chk=inCheck(turn),has=hasLegal(turn);
+  if(!has){endGame(chk?'checkmate':'stalemate',chk?(turn==='w'?'b':'w'):null);return;}
+  if(insuf()){endGame('insufficient');return;}
+  hc++;
+  if(hc>=100){endGame('fifty');return;}
+  if(hc===80)showHint('⚠️','Approaching 50-Move Rule','No pawn move or capture in 40 moves. A draw may be claimed soon.');
+  setSt(chk?names[turn]+"'s turn — CHECK! ⚠️":names[turn]+"'s turn ("+(turn==='w'?'White':'Black')+")");
+}
+
+function recPos(){
+  const k=board.map(r=>r.map(c=>c||'.').join('')).join('|')+'|'+turn;
+  ph.push(k);
+  if(ph.filter(x=>x===k).length>=3)endGame('repetition');
+}
+
+function insuf(){
+  const ps=[];for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(board[r][c])ps.push(board[r][c]);
+  if(ps.length===2)return true;
+  if(ps.length===3&&ps.some(p=>p[1]==='B'||p[1]==='N'))return true;
+  return false;
+}
+
+function endGame(reason,winner){
+  over=true;clearInterval(tint);
+  const m={
+    checkmate:['♟ Checkmate!',names[winner]+' wins by checkmate!','🏆'],
+    stalemate:['⚖️ Stalemate!','No legal moves — draw!','🤝'],
+    repetition:['🔄 Threefold Repetition!','Draw by repetition.','🤝'],
+    insufficient:['🔱 Insufficient Material!','Draw — cannot checkmate.','🤝'],
+    fifty:['📜 50-Move Rule!','Draw — 50 moves without capture.','🤝'],
+    timeout:['⏱ Time Out!',names[winner]+' wins on time!','🏆'],
+    resign:['🏳 Resignation!',names[winner]+' wins by resignation!','🏆'],
+    draw_agreed:['🤝 Draw Agreed!','Both players agreed to draw.','🤝']
+  };
+  const[title,msg,icon]=m[reason]||['Game Over','','♟'];
+  document.getElementById('ri').textContent=icon;
+  document.getElementById('rt').textContent=title;
+  document.getElementById('rm').textContent=msg;
+  openP('p-res');setSt(title);
+}
+
+// ── Legal moves ───────────────────────────────────────────
+function getLegal(r,c){
+  const piece=board[r][c];if(!piece)return[];
+  const color=piece[0];
+  return getPseudo(r,c).filter(([tr,tc])=>{
+    const saved=board.map(row=>[...row]),sEP=ep;
+    const type=piece[1];
+    if(type==='P'&&c!==tc&&!board[tr][tc]){const er=color==='w'?tr+1:tr-1;board[er][tc]=null;}
+    if(type==='K'&&Math.abs(c-tc)===2){if(tc===6){board[r][5]=board[r][7];board[r][7]=null;}else{board[r][3]=board[r][0];board[r][0]=null;}}
+    board[tr][tc]=piece;board[r][c]=null;
+    const safe=!inCheck(color);
+    board.splice(0,8,...saved);ep=sEP;
+    return safe;
+  });
+}
+
+function getPseudo(row,col){
+  const piece=board[row][col];if(!piece)return[];
+  const color=piece[0],type=piece[1],en=color==='w'?'b':'w';
+  const mv=[];
+  const inB=(r,c)=>r>=0&&r<8&&c>=0&&c<8;
+  const emp=(r,c)=>inB(r,c)&&!board[r][c];
+  const isEn=(r,c)=>inB(r,c)&&board[r][c]&&board[r][c][0]===en;
+  const slide=dirs=>dirs.forEach(([dr,dc])=>{let r=row+dr,c=col+dc;while(inB(r,c)){if(board[r][c]){if(isEn(r,c))mv.push([r,c]);break;}mv.push([r,c]);r+=dr;c+=dc;}});
+  const jump=offs=>offs.forEach(([dr,dc])=>{const r=row+dr,c=col+dc;if(inB(r,c)&&(!board[r][c]||isEn(r,c)))mv.push([r,c]);});
+  if(type==='P'){
+    const d=color==='w'?-1:1,s=color==='w'?6:1;
+    if(emp(row+d,col)){mv.push([row+d,col]);if(row===s&&emp(row+2*d,col))mv.push([row+2*d,col]);}
+    [-1,1].forEach(dc=>{const tr=row+d,tc=col+dc;if(isEn(tr,tc))mv.push([tr,tc]);if(ep&&ep[0]===tr&&ep[1]===tc)mv.push([tr,tc]);});
+  }
+  if(type==='R')slide([[0,1],[0,-1],[1,0],[-1,0]]);
+  if(type==='B')slide([[1,1],[1,-1],[-1,1],[-1,-1]]);
+  if(type==='Q')slide([[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]]);
+  if(type==='N')jump([[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]);
+  if(type==='K'){
+    jump([[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]]);
+    const kr=color==='w'?7:0;
+    if(row===kr&&col===4&&!atk(kr,4,en)){
+      if(cast[color].k&&!board[kr][5]&&!board[kr][6]&&!atk(kr,5,en)&&!atk(kr,6,en))mv.push([kr,6]);
+      if(cast[color].q&&!board[kr][3]&&!board[kr][2]&&!board[kr][1]&&!atk(kr,3,en)&&!atk(kr,2,en))mv.push([kr,2]);
+    }
+  }
+  return mv;
+}
+
+function inCheck(color){
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(board[r][c]===color+'K')return atk(r,c,color==='w'?'b':'w');
+  return false;
+}
+
+// Pure ray-cast attack — NO recursion
+function atk(row,col,by){
+  const inB=(r,c)=>r>=0&&r<8&&c>=0&&c<8;
+  for(const[dr,dc]of[[0,1],[0,-1],[1,0],[-1,0]]){let r=row+dr,c=col+dc;while(inB(r,c)){const p=board[r][c];if(p){if(p[0]===by&&(p[1]==='R'||p[1]==='Q'))return true;break;}r+=dr;c+=dc;}}
+  for(const[dr,dc]of[[1,1],[1,-1],[-1,1],[-1,-1]]){let r=row+dr,c=col+dc;while(inB(r,c)){const p=board[r][c];if(p){if(p[0]===by&&(p[1]==='B'||p[1]==='Q'))return true;break;}r+=dr;c+=dc;}}
+  for(const[dr,dc]of[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]){const r=row+dr,c=col+dc;if(inB(r,c)&&board[r][c]===by+'N')return true;}
+  const pd=by==='w'?1:-1;for(const dc of[-1,1]){const r=row+pd,c=col+dc;if(inB(r,c)&&board[r][c]===by+'P')return true;}
+  for(const[dr,dc]of[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]]){const r=row+dr,c=col+dc;if(inB(r,c)&&board[r][c]===by+'K')return true;}
+  return false;
+}
+
+function hasLegal(color){
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(board[r][c]&&board[r][c][0]===color&&getLegal(r,c).length>0)return true;
+  return false;
+}
+
+// ── AI ────────────────────────────────────────────────────
+function evalB(){
+  let s=0;
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=board[r][c];if(!p)continue;const cl=p[0],t=p[1],v=PV[t],pr=cl==='b'?r:7-r,pst=PST[t]?PST[t][pr][c]:0;s+=cl==='b'?(v+pst):-(v+pst);}
+  return s;
+}
+function allMv(color){const mv=[];for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(board[r][c]&&board[r][c][0]===color)getLegal(r,c).forEach(([tr,tc])=>mv.push({sr:r,sc:c,tr,tc}));return mv;}
+function simMv(mv){
+  const saved=board.map(r=>[...r]),sEP=ep,sCast=JSON.parse(JSON.stringify(cast));
+  const piece=board[mv.sr][mv.sc],color=piece[0],type=piece[1];
+  if(type==='P'&&mv.sc!==mv.tc&&!board[mv.tr][mv.tc]){const er=color==='w'?mv.tr+1:mv.tr-1;board[er][mv.tc]=null;}
+  if(type==='K'&&Math.abs(mv.sc-mv.tc)===2){if(mv.tc===6){board[mv.sr][5]=board[mv.sr][7];board[mv.sr][7]=null;}else{board[mv.sr][3]=board[mv.sr][0];board[mv.sr][0]=null;}}
+  const prom=(type==='P'&&(mv.tr===0||mv.tr===7))?color+'Q':piece;
+  board[mv.tr][mv.tc]=prom;board[mv.sr][mv.sc]=null;
+  ep=(type==='P'&&Math.abs(mv.sr-mv.tr)===2)?[(mv.sr+mv.tr)/2,mv.sc]:null;
+  return()=>{board.splice(0,8,...saved);ep=sEP;Object.assign(cast,sCast);};
+}
+
+function minimax(depth,alpha,beta,max){
+  if(depth===0)return evalB();
+  const color=max?'b':'w',moves=allMv(color);
+  if(!moves.length)return max?-30000:30000;
+  if(max){let best=-Infinity;for(const mv of moves){const u=simMv(mv);best=Math.max(best,minimax(depth-1,alpha,beta,false));u();alpha=Math.max(alpha,best);if(beta<=alpha)break;}return best;}
+  else{let best=Infinity;for(const mv of moves){const u=simMv(mv);best=Math.min(best,minimax(depth-1,alpha,beta,true));u();beta=Math.min(beta,best);if(beta<=alpha)break;}return best;}
+}
+
+function aiMove(){
+  const depth=diff==='easy'?1:diff==='medium'?2:3;
+  const moves=allMv('b');if(!moves.length)return;
+  let best=null,bs=-Infinity;
+  for(const mv of moves){
+    const u=simMv(mv);let s=minimax(depth-1,-Infinity,Infinity,false);u();
+    if(diff==='easy')s+=(Math.random()-.5)*220;
+    if(diff==='medium')s+=(Math.random()-.5)*45;
+    if(s>bs){bs=s;best=mv;}
+  }
+  if(!best)return;
+  const piece=board[best.sr][best.sc],target=board[best.tr][best.tc],type=piece[1];
+  if(target)captd.b.push(target);
+  if(type==='P'&&best.sc!==best.tc&&!board[best.tr][best.tc]){const er=best.tr+1;captd.b.push(board[er][best.tc]);board[er][best.tc]=null;}
+  if(type==='K'&&Math.abs(best.sc-best.tc)===2){if(best.tc===6){board[best.sr][5]=board[best.sr][7];board[best.sr][7]=null;}else{board[best.sr][3]=board[best.sr][0];board[best.sr][0]=null;}}
+  const prom=(type==='P'&&(best.tr===0||best.tr===7))?'bQ':piece;
+  board[best.tr][best.tc]=prom;board[best.sr][best.sc]=null;
+  ep=(type==='P'&&Math.abs(best.sr-best.tr)===2)?[(best.sr+best.tr)/2,best.sc]:null;
+  if(type==='K'){cast.b.k=false;cast.b.q=false;}
+  if(type==='R'){if(best.sc===7)cast.b.k=false;if(best.sc===0)cast.b.q=false;}
+  lm={fr:best.sr,fc:best.sc,tr:best.tr,tc:best.tc};
+  hist.push({board:board.map(r=>[...r]),ep,cast:JSON.parse(JSON.stringify(cast)),captd:JSON.parse(JSON.stringify(captd)),turn:'b',hc,fn,lm:{...lm},ll:mlog.length});
+  mlog.push(buildAN(piece,best.sr,best.sc,best.tr,best.tc,target));
+  turn='w';fn++;recPos();checkState();render();updateUI();
+}
+
+// ── Actions ───────────────────────────────────────────────
+function undoMove(){
+  let steps=(gmode==='computer'&&hist.length>=2)?2:1;
+  while(steps-->0&&hist.length>0){const s=hist.pop();board.splice(0,8,...s.board);ep=s.ep;cast=s.cast;captd=s.captd;turn=s.turn;hc=s.hc;fn=s.fn;lm=s.lm;mlog.splice(s.ll);}
+  over=false;sel=null;render();updateUI();
+  setSt(names[turn]+"'s turn ("+(turn==='w'?'White':'Black')+")");
+}
+
+function offerDraw(){
+  if(gmode==='computer'){if(Math.abs(evalB())<150){endGame('draw_agreed');return;}showHint('🤔','Draw Declined','The computer declines the draw offer.');return;}
+  document.getElementById('dom').textContent=names[turn]+' offers a draw. '+names[turn==='w'?'b':'w']+', do you accept?';
+  openP('p-draw');
+}
+function acceptDraw(){closeP('p-draw');endGame('draw_agreed');}
+function askResign(){document.getElementById('resm').textContent=names[turn]+', confirm resignation?';openP('p-res2');}
+function doResign(){closeP('p-res2');endGame('resign',turn==='w'?'b':'w');}
+
+function showPromo(color,cb){
+  const div=document.getElementById('prc');div.innerHTML='';
+  ['Q','R','B','N'].forEach(t=>{const b=document.createElement('div');b.className='prb';b.textContent=GL[color+t];b.onclick=()=>{closeP('p-promo');cb(t);};div.appendChild(b);});
+  openP('p-promo');
+}
+function showHint(icon,title,msg){document.getElementById('hi').textContent=icon;document.getElementById('ht').textContent=title;document.getElementById('hm').textContent=msg;openP('p-hint');}
+function openP(id){document.getElementById(id).classList.add('show');}
+function closeP(id){document.getElementById(id).classList.remove('show');}
+function closeAll(){document.querySelectorAll('.ov').forEach(e=>e.classList.remove('show'));}
+</script>
+</body>
+</html>
