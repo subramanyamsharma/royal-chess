@@ -12,8 +12,8 @@
   --gold: #d4a843; --gold-light: #f5d878; --cream: #faf3e0;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
-body { background:radial-gradient(ellipse at center,#2a1200 0%,#0d0600 100%); min-height:100vh; font-family:'Crimson Text',serif; color:var(--cream); overflow-x:hidden; }
-.screen { width:100%; display:flex; flex-direction:column; align-items:center; padding:20px; }
+body { background:radial-gradient(ellipse at center,#2a1200 0%,#0d0600 100%); min-height:100vh; font-family:'Crimson Text',serif; color:var(--cream); overflow-x:hidden; display:flex; flex-direction:column; align-items:center; }
+.screen { width:100%; max-width:1200px; display:flex; flex-direction:column; align-items:center; padding:20px; }
 .hidden { display:none !important; }
 h1 { font-family:'Cinzel',serif; font-size:2.5rem; font-weight:900; letter-spacing:.15em; text-transform:uppercase; color:var(--gold); text-shadow:0 0 28px rgba(212,168,67,.4); margin-bottom:4px; }
 .sub { font-family:'Cinzel',serif; font-size:.68rem; letter-spacing:.4em; color:var(--wood-mid); text-transform:uppercase; margin-bottom:20px; }
@@ -35,11 +35,19 @@ h1 { font-family:'Cinzel',serif; font-size:2.5rem; font-weight:900; letter-spaci
 .btn-go:hover { background:linear-gradient(135deg,#d4a843,#a06a20); transform:translateY(-1px); }
 
 /* GAME */
-#gs { max-width:1060px; }
-.gl { display:flex; gap:16px; align-items:flex-start; justify-content:center; flex-wrap:wrap; }
+#gs { width:100%; max-width:1100px; }
+.gl {
+  display:grid;
+  grid-template-columns: 185px auto 185px;
+  gap:18px;
+  align-items:start;
+  justify-content:center;
+  justify-items:center;
+  width:100%;
+}
 
-/* Panels */
-.pp { background:linear-gradient(160deg,#2a1400,#180c00); border:1px solid rgba(200,144,42,.38); border-radius:12px; padding:14px; min-width:148px; max-width:170px; flex:1; box-shadow:0 4px 18px rgba(0,0,0,.5); transition:all .28s; }
+/* Panels — fixed equal width both sides */
+.pp { background:linear-gradient(160deg,#2a1400,#180c00); border:1px solid rgba(200,144,42,.38); border-radius:12px; padding:14px; width:185px; box-shadow:0 4px 18px rgba(0,0,0,.5); transition:all .28s; }
 .pp.act { border-color:var(--gold); box-shadow:0 0 22px rgba(212,168,67,.22); }
 .pi { font-size:2.5rem; text-align:center; margin-bottom:6px; }
 .pn { font-family:'Cinzel',serif; font-size:.85rem; font-weight:600; color:var(--gold); text-align:center; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -108,10 +116,11 @@ h1 { font-family:'Cinzel',serif; font-size:2.5rem; font-weight:900; letter-spaci
 .prc { display:flex; gap:10px; justify-content:center; margin:13px 0; }
 .prb { width:56px; height:56px; display:flex; align-items:center; justify-content:center; font-size:34px; background:rgba(200,144,42,.1); border:2px solid rgba(200,144,42,.36); border-radius:8px; cursor:pointer; transition:all .18s; }
 .prb:hover { background:rgba(200,144,42,.27); border-color:var(--gold); transform:scale(1.1); }
+.diff-badge { font-family:'Cinzel',serif; font-size:.68rem; font-weight:600; color:var(--gold-light); background:rgba(200,144,42,.15); border:1px solid rgba(200,144,42,.3); border-radius:6px; padding:5px 8px; text-align:center; letter-spacing:.08em; margin-top:2px; }
 
-@media(max-width:750px) {
-  .gl { flex-direction:column; align-items:center; }
-  .pp { max-width:520px; width:100%; }
+@media(max-width:860px) {
+  .gl { grid-template-columns:1fr; justify-items:center; }
+  .pp { width:100%; max-width:530px; }
   h1 { font-size:1.7rem; }
   .sq { width:44px; height:44px; }
   #board { grid-template-columns:repeat(8,44px); grid-template-rows:repeat(8,44px); }
@@ -147,8 +156,10 @@ h1 { font-family:'Cinzel',serif; font-size:2.5rem; font-weight:900; letter-spaci
     <div class="fg">
       <label>Player Names</label>
       <div class="ninp">
-        <input id="nw" type="text" placeholder="White player name" maxlength="18">
-        <input id="nb" type="text" placeholder="Black / Computer name" maxlength="18">
+        <input id="nw" type="text" placeholder="Your name (White)" maxlength="18">
+        <div id="nb-row" style="display:none">
+          <input id="nb" type="text" placeholder="Black player name" maxlength="18" style="width:100%">
+        </div>
       </div>
     </div>
     <div class="fg">
@@ -174,7 +185,7 @@ h1 { font-family:'Cinzel',serif; font-size:2.5rem; font-weight:900; letter-spaci
       <div class="pc">Black Pieces</div>
       <div class="tbox"><div class="tv" id="tb">∞</div></div>
       <div class="cl">Captured</div><div class="cp" id="cb"></div>
-      <div class="cl">Moves</div><div class="mh" id="mhist"></div>
+      <div class="cl">Move History</div><div class="mh" id="mhist"></div>
     </div>
 
     <div class="ba">
@@ -202,6 +213,10 @@ h1 { font-family:'Cinzel',serif; font-size:2.5rem; font-weight:900; letter-spaci
       <div class="pc">White Pieces</div>
       <div class="tbox"><div class="tv" id="tw">∞</div></div>
       <div class="cl">Captured</div><div class="cp" id="cw"></div>
+      <div class="cl">Difficulty</div>
+      <div class="diff-badge" id="diff-badge">Medium</div>
+      <div class="cl" style="margin-top:10px">Mode</div>
+      <div class="diff-badge" id="mode-badge">vs Computer</div>
     </div>
   </div>
 </div>
@@ -281,6 +296,15 @@ function pickMode(m){
   gmode=m;
   ['computer','human'].forEach(x=>document.getElementById('m-'+(x==='computer'?'comp':'hum')).classList.toggle('on',x===m));
   document.getElementById('dg').style.display=m==='computer'?'':'none';
+  const nbRow=document.getElementById('nb-row');
+  const nbInput=document.getElementById('nb');
+  if(m==='computer'){
+    nbRow.style.display='none';
+    nbInput.value='Computer';
+  } else {
+    nbRow.style.display='';
+    nbInput.value='';
+  }
 }
 function pickLvl(l){
   diff=l;
@@ -293,10 +317,14 @@ function pickTime(t){
 
 function startGame(){
   const wn=document.getElementById('nw').value.trim()||'White';
-  const bn=document.getElementById('nb').value.trim()||(gmode==='computer'?'Computer':'Black');
+  const bn=gmode==='computer'?'Computer':(document.getElementById('nb').value.trim()||'Black');
   names={w:wn,b:bn};
   document.getElementById('nw2').textContent=wn;
   document.getElementById('nb2').textContent=bn;
+  // Set info badges on right panel
+  const diffLabels={easy:'Easy 🟢',medium:'Medium 🟡',hard:'Hard 🔴'};
+  document.getElementById('diff-badge').textContent=gmode==='computer'?diffLabels[diff]:'—';
+  document.getElementById('mode-badge').textContent=gmode==='computer'?'vs Computer':'2 Players';
   document.getElementById('ss').classList.add('hidden');
   document.getElementById('gs').classList.remove('hidden');
   initGame();
@@ -306,6 +334,8 @@ function goSetup(){
   closeAll();clearInterval(tint);
   document.getElementById('gs').classList.add('hidden');
   document.getElementById('ss').classList.remove('hidden');
+  // Re-apply mode state to restore correct UI
+  document.getElementById('nb-row').style.display=gmode==='computer'?'none':'';
 }
 
 // ── Init ──────────────────────────────────────────────────
@@ -345,7 +375,7 @@ function buildDOM(){
   const el=document.getElementById('board');el.innerHTML='';
   for(let r=0;r<8;r++)for(let c=0;c<8;c++){
     const s=document.createElement('div');
-    s.className='sq '+((r+c)%2===0?'lt':'dk');
+    s.className='sq '+((r+c)%2!==0?'lt':'dk');
     s.dataset.r=r;s.dataset.c=c;
     s.addEventListener('click',()=>onClick(r,c));
     el.appendChild(s);
@@ -359,7 +389,7 @@ function render(){
   const pm=sel?getLegal(sel[0],sel[1]):[];
   for(let r=0;r<8;r++)for(let c=0;c<8;c++){
     const el=sqEl(r,c);
-    el.className='sq '+((r+c)%2===0?'lt':'dk');
+    el.className='sq '+((r+c)%2!==0?'lt':'dk');
     if(lm){if(lm.fr===r&&lm.fc===c)el.classList.add('lf');if(lm.tr===r&&lm.tc===c)el.classList.add('lt2');}
     if(sel&&sel[0]===r&&sel[1]===c)el.classList.add('sel');
     const p=board[r][c];
